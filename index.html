@@ -3,17 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Công Cụ Dàn Trang In CCCD - In Nhiều Trang</title>
+    <title>Công Cụ Dàn Trang In CCCD & Ảnh Màn Hình</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Cấu hình in */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Cấu hình in ấn chuẩn A4 */
         @media print {
             @page {
-                size: A4;
+                size: A4 portrait;
                 margin: 0;
             }
             body {
-                background: white;
+                background: white !important;
+                color: black !important;
             }
             .no-print {
                 display: none !important;
@@ -21,33 +27,41 @@
             #print-container {
                 display: block !important;
             }
-            /* Mỗi bộ CCCD là một trang riêng */
+            
+            /* Mỗi bộ là một trang A4 chuẩn */
             .print-page {
                 width: 210mm;
                 height: 297mm;
+                box-sizing: border-box;
                 page-break-after: always;
+                break-after: page;
                 display: flex;
                 flex-direction: column;
-                align-items: center; /* Căn giữa theo chiều ngang */
+                align-items: center;
                 justify-content: flex-start;
-                padding-top: 20mm; /* Cách lề trên */
-                box-sizing: border-box;
+                padding-top: 20mm;
+                padding-left: 15mm;
+                padding-right: 15mm;
+                background: #ffffff;
             }
             .print-page:last-child {
                 page-break-after: auto;
+                break-after: auto;
             }
         }
 
-        /* Kích thước chuẩn thẻ CCCD (ISO 7810 ID-1) */
+        /* Kích thước chuẩn thẻ CCCD (ISO 7810 ID-1: 85.6mm x 53.98mm) */
         .cccd-card {
             width: 85.6mm;
             height: 53.98mm;
-            border: 1px solid #eee;
+            border: 1px dashed #cbd5e1;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: #fff;
+            border-radius: 3mm;
+            box-sizing: border-box;
         }
 
         .cccd-card img {
@@ -56,203 +70,492 @@
             object-fit: fill;
         }
 
-        .drop-zone {
-            transition: all 0.2s ease;
-            cursor: pointer;
-            border: 2px dashed #cbd5e1;
+        /* Kích thước cho Ảnh chụp màn hình 1 ảnh / trang */
+        .screen1-card {
+            max-width: 180mm;
+            max-height: 240mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .screen1-card img {
+            max-width: 100%;
+            max-height: 240mm;
+            object-fit: contain;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
         }
 
-        .drop-zone:hover, .drop-zone:focus {
+        /* Kích thước cho Ảnh chụp màn hình 2 ảnh / trang (SẮP HÀNG NGANG) */
+        .screen2-card-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 6mm;
+            width: 100%;
+        }
+        .screen2-card {
+            flex: 1;
+            max-width: 88mm;
+            max-height: 230mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .screen2-card img {
+            max-width: 100%;
+            max-height: 230mm;
+            object-fit: contain;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .drop-zone {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: 2px dashed #cbd5e1;
+            position: relative;
+        }
+
+        .drop-zone:hover {
             border-color: #3b82f6;
             background-color: #eff6ff;
+        }
+
+        .drop-zone:focus {
+            border-color: #2563eb;
+            border-style: solid;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            outline: none;
+            background-color: #f0f9ff;
         }
 
         .drop-active {
             border-color: #10b981 !important;
             background-color: #ecfdf5 !important;
         }
-
-        /* Hiệu ứng khi được chọn (focus) để dán */
-        .drop-zone:focus {
-            border-style: solid;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
-            outline: none;
-        }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans">
+<body class="bg-slate-100 min-h-screen text-slate-800 antialiased selection:bg-blue-500 selection:text-white">
 
     <!-- GIAO DIỆN QUẢN LÝ (KHÔNG IN) -->
     <div class="max-w-5xl mx-auto p-4 md:p-8 no-print">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-slate-800">In CCCD ở đây</h1>
+        
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold mb-2">
+                ✨ Công cụ hỗ trợ in ấn nhanh
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Dàn Trang In CCCD & Ảnh Màn Hình</h1>
+            <p class="text-sm text-slate-500 mt-1">Hỗ trợ dán ảnh trực tiếp từ Zalo / Clipboard, tự động căn kích thước chuẩn A4</p>
         </header>
 
-        <div class="bg-blue-600 text-white p-4 rounded-lg mb-6 shadow-md flex items-start gap-3">
-            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div>
-                <p class="font-bold text-lg">Cách dán ảnh nhanh:</p>
-                <ul class="text-sm opacity-90 list-disc ml-4">
-                    <li>Chuột phải vào ảnh ở Zalo -> <b>"Sao chép hình ảnh"</b>.</li>
-                    <li>Click vào ô dưới đây (để hiện viền xanh) -> Nhấn <b>Ctrl + V</b>.</li>
-                    <li>(Được tạo cho riêng mẹ Nga vì sự gà của cô ấy trong sử dụng máy tính!!!).</li>
-                </ul>
+        <!-- Hướng dẫn sử dụng -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-5 rounded-2xl mb-6 shadow-md relative overflow-hidden">
+            <div class="flex items-start gap-3 relative z-10">
+                <div class="p-2 bg-white/10 rounded-xl flex-shrink-0">
+                    <svg class="w-6 h-6 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-lg mb-1">Cách dán ảnh siêu nhanh:</h2>
+                    <ul class="text-sm space-y-1 opacity-95 list-disc ml-4">
+                        <li>Chuột phải vào ảnh ở Zalo hoặc Web ➔ chọn <b>"Sao chép hình ảnh"</b> (Copy Image).</li>
+                        <li>Click chọn ô cần dán (sẽ hiện viền xanh đậm) ➔ Nhấn phím <b>Ctrl + V</b> để dán.</li>
+                        <li>Bạn cũng có thể kéo thả ảnh từ máy tính hoặc bấm chọn file trực tiếp.</li>
+                        <li class="italic text-yellow-200 text-xs pt-1">❤️ (Thiết kế riêng cho mẹ Nga để in tài liệu, CCCD đơn giản nhất!).</li>
+                    </ul>
+                </div>
             </div>
         </div>
 
-        <!-- Danh sách các bộ CCCD -->
-        <div id="card-list" class="space-y-6">
-            <!-- Các bộ CCCD sẽ được thêm vào đây -->
+        <!-- Thanh công cụ chung -->
+        <div class="flex flex-wrap items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Tùy chọn thêm bộ mới:</span>
+                <select id="default-type-select" class="text-sm bg-slate-50 border border-slate-300 text-slate-700 font-medium rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="cccd">💳 CCCD 2 Mặt (Chuẩn ID)</option>
+                    <option value="screen1">📱 1 Ảnh chụp màn hình / trang</option>
+                    <option value="screen2">📸 2 Ảnh chụp màn hình / trang (Sắp ngang)</option>
+                </select>
+            </div>
+            
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="addNewSet()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2.5 px-4 rounded-xl flex items-center transition shadow-sm hover:shadow">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    Thêm trang mới
+                </button>
+                
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-xl flex items-center transition shadow-sm hover:shadow">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h10a2 2 0 002-2v-4H5v4a2 2 0 002 2z"></path></svg>
+                    In tất cả (PDF)
+                </button>
+
+                <button onclick="openResetModal()" class="bg-slate-200 hover:bg-red-100 hover:text-red-600 text-slate-700 text-sm font-bold py-2.5 px-3.5 rounded-xl transition">
+                    Xóa hết
+                </button>
+            </div>
         </div>
 
-        <div class="mt-8 flex flex-wrap justify-center gap-4">
-            <button onclick="addNewSet()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl flex items-center transition shadow-lg">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Thêm bộ CCCD mới
-            </button>
-            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-xl flex items-center transition shadow-lg">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h10a2 2 0 002-2v-4H5v4a2 2 0 002 2z"></path></svg>
-                In tất cả (PDF)
-            </button>
-            <button onclick="resetAll()" class="bg-slate-300 hover:bg-slate-400 text-slate-700 font-bold py-3 px-6 rounded-xl transition">
-                Xóa hết
+        <!-- Danh sách các bộ CCCD / Ảnh -->
+        <div id="card-list" class="space-y-6">
+            <!-- Các bộ sẽ được thêm vào đây bằng JavaScript -->
+        </div>
+
+        <!-- Nút thêm phía dưới -->
+        <div class="mt-8 flex justify-center">
+            <button onclick="addNewSet()" class="bg-white border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:text-emerald-600 text-slate-600 font-bold py-4 px-8 rounded-2xl flex items-center transition w-full justify-center max-w-md group shadow-sm">
+                <svg class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Thêm trang in mới
             </button>
         </div>
     </div>
 
-    <!-- KHU VỰC IN (CHỈ HIỆN KHI IN) -->
+    <!-- Modal xác nhận xóa hết (Thay thế confirm popup) -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Xác nhận xóa tất cả?</h3>
+            <p class="text-sm text-slate-600 mb-6">Tất cả các bộ ảnh đã tải lên sẽ bị xóa sạch khỏi danh sách. Bạn có chắc chắn muốn xóa?</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeResetModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Hủy bỏ</button>
+                <button onclick="confirmResetAll()" class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm">Đồng ý xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông báo Toast nhanh -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white text-sm px-4 py-3 rounded-xl shadow-xl transition-all opacity-0 pointer-events-none translate-y-2 z-50 flex items-center gap-2">
+        <span id="toast-message">Đã dán ảnh thành công</span>
+    </div>
+
+    <!-- KHU VỰC IN (CHỈ HIỆN KHI IN HOẶC TẠO PDF) -->
     <div id="print-container" class="hidden">
         <!-- Nội dung in sẽ được sinh ra bằng JS -->
     </div>
 
     <script>
         let setCount = 0;
+        // Lưu trữ thông tin từng trang { id, type: 'cccd'|'screen1'|'screen2' }
+        const setsState = {};
 
+        // Hiển thị thông báo Toast
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = msg;
+            toast.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // Thêm bộ CCCD / Ảnh chụp màn hình mới
         function addNewSet() {
             setCount++;
             const id = setCount;
+            const defaultType = document.getElementById('default-type-select').value || 'cccd';
+            
+            setsState[id] = {
+                type: defaultType,
+                images: {}
+            };
+
             const cardList = document.getElementById('card-list');
             
-            const setHtml = `
-                <div id="set-container-${id}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative group animate-in fade-in duration-300">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-slate-700">Bộ số #${id}</h3>
-                        <button onclick="removeSet(${id})" class="text-red-400 hover:text-red-600 text-sm">Xóa bộ này</button>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Mặt trước -->
-                        <div id="drop-${id}-front" tabindex="0" class="drop-zone h-40 rounded-xl flex flex-col items-center justify-center p-2 outline-none">
-                            <div id="status-${id}-front" class="text-center pointer-events-none">
-                                <p class="text-xs font-bold text-slate-400">MẶT TRƯỚC</p>
-                                <p class="text-[10px] text-slate-300 italic">Click vào đây rồi nhấn Ctrl+V</p>
-                            </div>
-                            <img id="preview-${id}-front" class="hidden h-full w-full object-contain" />
-                        </div>
-
-                        <!-- Mặt sau -->
-                        <div id="drop-${id}-back" tabindex="0" class="drop-zone h-40 rounded-xl flex flex-col items-center justify-center p-2 outline-none">
-                            <div id="status-${id}-back" class="text-center pointer-events-none">
-                                <p class="text-xs font-bold text-slate-400">MẶT SAU</p>
-                                <p class="text-[10px] text-slate-300 italic">Click vào đây rồi nhấn Ctrl+V</p>
-                            </div>
-                            <img id="preview-${id}-back" class="hidden h-full w-full object-contain" />
-                        </div>
-                    </div>
-                </div>
-            `;
+            const setWrapper = document.createElement('div');
+            setWrapper.id = `set-container-${id}`;
+            setWrapper.className = "bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200 relative group transition-all";
             
-            cardList.insertAdjacentHTML('beforeend', setHtml);
-            setupInteractions(id);
+            cardList.appendChild(setWrapper);
+            
+            renderSetUI(id);
             syncPrintArea();
         }
 
-        function setupInteractions(id) {
-            ['front', 'back'].forEach(side => {
-                const zone = document.getElementById(`drop-${id}-${side}`);
+        // Render lại giao diện cho từng bộ dựa theo loại được chọn
+        function renderSetUI(id) {
+            const container = document.getElementById(`set-container-${id}`);
+            if (!container) return;
 
-                // Chỉ focus vùng này khi click, không gọi input.click()
-                zone.onclick = () => {
-                    zone.focus();
+            const currentType = setsState[id].type;
+
+            let slotsHtml = '';
+
+            if (currentType === 'cccd') {
+                slotsHtml = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <!-- Mặt trước -->
+                        ${createDropZoneHtml(id, 'front', 'MẶT TRƯỚC (CCCD)', 'Thẻ kích thước chuẩn ISO 85.6 x 53.98mm')}
+                        <!-- Mặt sau -->
+                        ${createDropZoneHtml(id, 'back', 'MẶT SAU (CCCD)', 'Thẻ kích thước chuẩn ISO 85.6 x 53.98mm')}
+                    </div>
+                `;
+            } else if (currentType === 'screen1') {
+                slotsHtml = `
+                    <div class="grid grid-cols-1 gap-4">
+                        ${createDropZoneHtml(id, 'screen1', 'ẢNH CHỤP MÀN HÌNH (1 ẢNH / TRANG)', 'Hiển thị lớn nguyên trang A4')}
+                    </div>
+                `;
+            } else if (currentType === 'screen2') {
+                slotsHtml = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        ${createDropZoneHtml(id, 'screen2_1', 'ẢNH MÀN HÌNH 1 (BÊN TRÁI)', 'Sắp xếp bên trái trang A4')}
+                        ${createDropZoneHtml(id, 'screen2_2', 'ẢNH MÀN HÌNH 2 (BÊN PHẢI)', 'Sắp xếp bên phải trang A4')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="flex flex-wrap justify-between items-center pb-4 mb-4 border-b border-slate-100 gap-2">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-slate-800 text-white font-extrabold text-xs px-2.5 py-1 rounded-lg">Trang #${id}</span>
+                        
+                        <!-- Chọn loại định dạng cho trang này -->
+                        <select onchange="changeSetType(${id}, this.value)" class="text-xs bg-slate-100 border-0 font-bold text-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                            <option value="cccd" ${currentType === 'cccd' ? 'selected' : ''}>💳 CCCD 2 Mặt</option>
+                            <option value="screen1" ${currentType === 'screen1' ? 'selected' : ''}>📱 1 Ảnh Màn Hình / Trang</option>
+                            <option value="screen2" ${currentType === 'screen2' ? 'selected' : ''}>📸 2 Ảnh Màn Hình / Trang (Sắp ngang)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="removeSet(${id})" class="text-slate-400 hover:text-red-600 text-xs font-semibold flex items-center gap-1 transition px-2 py-1 rounded-md hover:bg-red-50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Xóa trang này
+                    </button>
+                </div>
+
+                ${slotsHtml}
+            `;
+
+            setupInteractions(id);
+            restoreImages(id);
+        }
+
+        // Tạo khung HTML cho từng vị trí tải ảnh
+        function createDropZoneHtml(id, slotKey, labelTitle, subTitle) {
+            return `
+                <div id="drop-${id}-${slotKey}" tabindex="0" class="drop-zone min-h-[160px] rounded-xl flex flex-col items-center justify-center p-3 outline-none bg-slate-50/50 group/zone">
+                    <input type="file" id="file-input-${id}-${slotKey}" accept="image/*" class="hidden" onchange="handleFileSelect(event, ${id}, '${slotKey}')" />
+                    
+                    <div id="status-${id}-${slotKey}" class="text-center pointer-events-none select-none my-auto">
+                        <div class="w-10 h-10 mx-auto mb-2 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover/zone:scale-110 group-hover/zone:bg-blue-100 group-hover/zone:text-blue-600 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <p class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-0.5">${labelTitle}</p>
+                        <p class="text-[11px] text-blue-600 font-medium">Click chọn rồi ấn Ctrl+V để dán</p>
+                        <p class="text-[10px] text-slate-400 mt-1">${subTitle}</p>
+                    </div>
+
+                    <div id="wrapper-${id}-${slotKey}" class="hidden relative w-full h-full flex flex-col items-center justify-center">
+                        <img id="preview-${id}-${slotKey}" class="max-h-[180px] w-auto object-contain rounded border border-slate-200 shadow-sm" />
+                        <button onclick="clearSlotImage(${id}, '${slotKey}', event)" class="absolute top-1 right-1 bg-slate-900/70 hover:bg-red-600 text-white p-1.5 rounded-full transition shadow-md" title="Xóa ảnh này">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="mt-2 text-center pointer-events-auto">
+                        <button onclick="document.getElementById('file-input-${id}-${slotKey}').click()" class="text-[11px] text-slate-500 hover:text-blue-600 underline font-medium">Hoặc chọn từ máy tính</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Thay đổi định dạng trang (CCCD / 1 ảnh / 2 ảnh)
+        function changeSetType(id, newType) {
+            setsState[id].type = newType;
+            renderSetUI(id);
+            syncPrintArea();
+        }
+
+        // Khôi phục lại ảnh đã đăng nếu người dùng chuyển loại hình
+        function restoreImages(id) {
+            const images = setsState[id].images || {};
+            Object.keys(images).forEach(slotKey => {
+                if (images[slotKey]) {
+                    displayImage(id, slotKey, images[slotKey]);
+                }
+            });
+        }
+
+        // Gắn các sự kiện Drag, Drop, Focus & Paste
+        function setupInteractions(id) {
+            const container = document.getElementById(`set-container-${id}`);
+            if (!container) return;
+
+            const zones = container.querySelectorAll('.drop-zone');
+
+            zones.forEach(zone => {
+                const slotKey = zone.id.replace(`drop-${id}-`, '');
+
+                // Focus khi nhấp vào vùng drop zone
+                zone.onclick = (e) => {
+                    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+                        zone.focus();
+                    }
                 };
 
+                // Hiệu ứng Kéo & Thả
                 zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('drop-active'); };
                 zone.ondragleave = () => zone.classList.remove('drop-active');
                 zone.ondrop = (e) => {
                     e.preventDefault();
                     zone.classList.remove('drop-active');
                     const file = e.dataTransfer.files[0];
-                    if (file && file.type.startsWith('image/')) processFile(file, id, side);
+                    if (file && file.type.startsWith('image/')) {
+                        processFile(file, id, slotKey);
+                    }
                 };
 
+                // Bắt sự kiện Dán (Ctrl + V)
                 zone.onpaste = (e) => {
-                    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                    const clipboardData = e.clipboardData || window.clipboardData;
+                    if (!clipboardData) return;
+                    
+                    const items = clipboardData.items;
                     for (let item of items) {
                         if (item.kind === 'file' && item.type.startsWith('image/')) {
-                            processFile(item.getAsFile(), id, side);
+                            const file = item.getAsFile();
+                            if (file) {
+                                processFile(file, id, slotKey);
+                                showToast('Đã dán ảnh thành công!');
+                            }
                         }
                     }
                 };
             });
         }
 
-        function processFile(file, id, side) {
+        // Xử lý chọn file từ ổ đĩa
+        function handleFileSelect(e, id, slotKey) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                processFile(file, id, slotKey);
+            }
+        }
+
+        // Đọc file ảnh và đưa vào state
+        function processFile(file, id, slotKey) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const url = e.target.result;
-                const previewImg = document.getElementById(`preview-${id}-${side}`);
-                const statusDiv = document.getElementById(`status-${id}-${side}`);
+                if (!setsState[id].images) setsState[id].images = {};
+                setsState[id].images[slotKey] = url;
                 
-                previewImg.src = url;
-                previewImg.classList.remove('hidden');
-                statusDiv.classList.add('hidden');
+                displayImage(id, slotKey, url);
                 syncPrintArea();
             };
             reader.readAsDataURL(file);
         }
 
+        // Hiển thị ảnh xem trước
+        function displayImage(id, slotKey, url) {
+            const previewImg = document.getElementById(`preview-${id}-${slotKey}`);
+            const wrapper = document.getElementById(`wrapper-${id}-${slotKey}`);
+            const statusDiv = document.getElementById(`status-${id}-${slotKey}`);
+
+            if (previewImg && wrapper && statusDiv) {
+                previewImg.src = url;
+                wrapper.classList.remove('hidden');
+                statusDiv.classList.add('hidden');
+            }
+        }
+
+        // Xóa 1 ô ảnh đơn lẻ
+        function clearSlotImage(id, slotKey, event) {
+            if (event) event.stopPropagation();
+            if (setsState[id]?.images?.[slotKey]) {
+                delete setsState[id].images[slotKey];
+            }
+            const wrapper = document.getElementById(`wrapper-${id}-${slotKey}`);
+            const statusDiv = document.getElementById(`status-${id}-${slotKey}`);
+            if (wrapper && statusDiv) {
+                wrapper.classList.add('hidden');
+                statusDiv.classList.remove('hidden');
+            }
+            syncPrintArea();
+        }
+
+        // Đồng bộ toàn bộ dữ liệu lên khu vực chuẩn bị In
         function syncPrintArea() {
             const container = document.getElementById('print-container');
             container.innerHTML = '';
-            
-            // Lấy tất cả các bộ container đang tồn tại
-            const sets = document.querySelectorAll('[id^="set-container-"]');
-            
-            sets.forEach(set => {
-                const id = set.id.replace('set-container-', '');
-                const frontImg = document.getElementById(`preview-${id}-front`);
-                const backImg = document.getElementById(`preview-${id}-back`);
 
-                const frontSrc = frontImg && !frontImg.classList.contains('hidden') ? frontImg.src : '';
-                const backSrc = backImg && !backImg.classList.contains('hidden') ? backImg.src : '';
+            Object.keys(setsState).forEach(id => {
+                const setData = setsState[id];
+                const type = setData.type;
+                const images = setData.images || {};
 
                 const page = document.createElement('div');
                 page.className = 'print-page';
-                
-                page.innerHTML = `
-                    <div style="display: flex; gap: 2mm; justify-content: center; width: 100%;">
-                        <div class="cccd-card">${frontSrc ? `<img src="${frontSrc}">` : ''}</div>
-                        <div class="cccd-card">${backSrc ? `<img src="${backSrc}">` : ''}</div>
-                    </div>
-                `;
+
+                if (type === 'cccd') {
+                    const frontSrc = images['front'] || '';
+                    const backSrc = images['back'] || '';
+
+                    page.innerHTML = `
+                        <div style="display: flex; gap: 4mm; justify-content: center; width: 100%;">
+                            <div class="cccd-card">${frontSrc ? `<img src="${frontSrc}">` : ''}</div>
+                            <div class="cccd-card">${backSrc ? `<img src="${backSrc}">` : ''}</div>
+                        </div>
+                    `;
+                } else if (type === 'screen1') {
+                    const screenSrc = images['screen1'] || '';
+                    page.innerHTML = `
+                        <div class="screen1-card">
+                            ${screenSrc ? `<img src="${screenSrc}">` : ''}
+                        </div>
+                    `;
+                } else if (type === 'screen2') {
+                    const src1 = images['screen2_1'] || '';
+                    const src2 = images['screen2_2'] || '';
+
+                    page.innerHTML = `
+                        <div class="screen2-card-container">
+                            <div class="screen2-card">${src1 ? `<img src="${src1}">` : ''}</div>
+                            <div class="screen2-card">${src2 ? `<img src="${src2}">` : ''}</div>
+                        </div>
+                    `;
+                }
+
                 container.appendChild(page);
             });
         }
 
+        // Xóa một bộ trang
         function removeSet(id) {
+            delete setsState[id];
             const set = document.getElementById(`set-container-${id}`);
             if (set) {
                 set.remove();
                 syncPrintArea();
+                showToast('Đã xóa trang');
             }
         }
 
-        function resetAll() {
-            if(confirm('Xóa toàn bộ danh sách?')) location.reload();
+        // Mở/Đóng Modal Xóa Tất Cả
+        function openResetModal() {
+            document.getElementById('confirm-modal').classList.remove('hidden');
         }
 
-        // Khởi tạo bộ đầu tiên
-        window.onload = addNewSet;
+        function closeResetModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        function confirmResetAll() {
+            closeResetModal();
+            document.getElementById('card-list').innerHTML = '';
+            Object.keys(setsState).forEach(key => delete setsState[key]);
+            setCount = 0;
+            addNewSet();
+            showToast('Đã làm mới danh sách');
+        }
+
+        // Khởi tạo trang đầu tiên khi load web
+        window.onload = () => {
+            addNewSet();
+        };
     </script>
 </body>
 </html>
